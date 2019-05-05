@@ -1,4 +1,5 @@
 import psycopg2
+import configparser
 from urllib.request import urlopen
 import lxml.html as website
 from lxml.cssselect import CSSSelector
@@ -12,12 +13,18 @@ doc = website.parse(page)
 sel = CSSSelector("#mainContentSpan > div:nth-child(8)")
 print(sel(doc)[0].text_content().split(" ")[0] + "\n")
 
+# read db credentials from config file
+config = configparser.ConfigParser()
+config.read("./credentials")
+user = config.get("configuration", "user")
+password = config.get("configuration", "password")
+
 try:
-	connection = psycopg2.connect(user="",
-	                              password="",
-	                              host="",
-	                              port="",
-	                              database="")
+	connection = psycopg2.connect(user=user,
+	                              password=password,
+	                              host="localhost",
+	                              port="5432",
+	                              database="apartmentdb")
 	cursor = connection.cursor()
 
 	# Compare addresses to those in database
@@ -35,6 +42,7 @@ try:
 			if records: continue
 
 			# If a new address is found, write to db and send an email
+			print(address, price)
 			query = "INSERT INTO apartments (addr, price) VALUES (%s, %s);"
 			cursor.execute(query, (address, price))
 		except:
