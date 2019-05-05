@@ -24,59 +24,59 @@ password = config.get("db_config", "password")
 context = ssl.create_default_context()
 
 try:
-	connection = psycopg2.connect(user=user,
-	                              password=password,
-	                              host="localhost",
-	                              port="5432",
-	                              database="apartmentdb")
-	cursor = connection.cursor()
+  connection = psycopg2.connect(user=user,
+                                password=password,
+                                host="localhost",
+                                port="5432",
+                                database="apartmentdb")
+  cursor = connection.cursor()
 
-	port = 465
-	sender = config.get("email_config", "sender")
-	reciever = config.get("email_config", "reciever")
-	password = config.get("email_config", "password")
+  port = 465
+  sender = config.get("email_config", "sender")
+  reciever = config.get("email_config", "reciever")
+  password = config.get("email_config", "password")
 
-	server = smtplib.SMTP_SSL("smtp.gmail.com", port, context=context)
-	server.login(sender, password)
+  server = smtplib.SMTP_SSL("smtp.gmail.com", port, context=context)
+  server.login(sender, password)
 
-	# Compare addresses to those in database
-	for num in range(1, 31):
-		try:
-			sel = CSSSelector("#Rentals > table > tbody > tr:nth-child(" + str(num) + ") > td:nth-child(2) > span > a")
-			address = sel(doc)[0].text_content().strip()
-			url = "https://listings.och.uwaterloo.ca/" + sel(doc)[0].get("href")
-			
-			sel = CSSSelector("#Rentals > table > tbody > tr:nth-child(" + str(num) + ") > td.t-last")
-			price = " ".join(sel(doc)[0].text_content().strip().split())
+  # Compare addresses to those in database
+  for num in range(1, 31):
+    try:
+      sel = CSSSelector("#Rentals > table > tbody > tr:nth-child(" + str(num) + ") > td:nth-child(2) > span > a")
+      address = sel(doc)[0].text_content().strip()
+      url = "https://listings.och.uwaterloo.ca/" + sel(doc)[0].get("href")
+      
+      sel = CSSSelector("#Rentals > table > tbody > tr:nth-child(" + str(num) + ") > td.t-last")
+      price = " ".join(sel(doc)[0].text_content().strip().split())
 
-			query = "SELECT exists (SELECT 1 FROM apartments WHERE addr = %s LIMIT 1);"
-			cursor.execute(query, (address, ))
-			records = cursor.fetchall()[0][0]
+      query = "SELECT exists (SELECT 1 FROM apartments WHERE addr = %s LIMIT 1);"
+      cursor.execute(query, (address, ))
+      records = cursor.fetchall()[0][0]
 
-			if records: continue
+      if records: continue
 
-			# If a new address is found, write to db and send an email
-			subject = "New apartment: {}".format(address)
-			body = inspect.cleandoc("""Here's the details: 
-															Address: {}
-															Price: {}
+      # If a new address is found, write to db and send an email
+      subject = "New apartment: {}".format(address)
+      body = inspect.cleandoc("""Here's the details: 
+                              Address: {}
+                              Price: {}
 
-															Check it out at: {}.""".format(address, price, url))
-			message = 'Subject: {}\n\n{}'.format(subject, body)
+                              Check it out at: {}.""".format(address, price, url))
+      message = 'Subject: {}\n\n{}'.format(subject, body)
 
-			server.sendmail(sender, reciever, message)
+      server.sendmail(sender, reciever, message)
 
-			query = "INSERT INTO apartments (addr, price) VALUES (%s, %s);"
-			cursor.execute(query, (address, price))
-		except:
-			print("Iteration " + str(num) + " failed.")
-			break
+      query = "INSERT INTO apartments (addr, price) VALUES (%s, %s);"
+      cursor.execute(query, (address, price))
+    except:
+      print("Iteration " + str(num) + " failed.")
+      break
 
 except (Exception, psycopg2.Error) as error:
     print ("Error while fetching data from PostgreSQL", error)
 finally:
-	if(connection):
-		connection.commit()
-		cursor.close()
-		connection.close()
-		print("PostgreSQL connection is closed")
+  if(connection):
+    connection.commit()
+    cursor.close()
+    connection.close()
+    print("PostgreSQL connection is closed")
