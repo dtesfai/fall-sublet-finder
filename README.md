@@ -1,4 +1,4 @@
-# FSF (Fall Sublet Finder)
+# Fall Sublet Finder
 
 Finding a sublet for the Fall semester can be a difficult process. Given that there is a lot of competition, a slightly quicker message can give someone the advantage necessary to secure one. 
 
