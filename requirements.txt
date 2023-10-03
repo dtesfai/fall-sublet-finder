@@ -1,4 +1,4 @@
 cssselect==1.0.3
 lxml==4.6.3
 psycopg2==2.8.2
-urllib3==1.26.5
+urllib3==1.26.17
